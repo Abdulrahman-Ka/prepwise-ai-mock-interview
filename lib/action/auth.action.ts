@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 
 const ONE_WEEK = 60 * 60 * 24 * 7;
 
-export async function signUp(params: SignUpParams) {
+export async function signUp(params: Omit<SignUpParams, "password">) {
   const { uid, name, email } = params;
 
   try {
@@ -26,17 +26,10 @@ export async function signUp(params: SignUpParams) {
       message: "Account created successfully. Please sign in.",
     };
   } catch (err: unknown) {
-    console.error("Error creating a user", err);
-
-    if (err.code === "auth/email-already-exists") {
-      return {
-        success: false,
-        message: "This email is already in use.",
-      };
-    }
+    console.error("Error creating a user:", err);
     return {
       success: false,
-      message: "Failed to create an email.",
+      message: "Failed to create account. Please try again.",
     };
   }
 }
@@ -88,17 +81,14 @@ export async function getCurrentUser(): Promise<User | null> {
   const cookieStore = await cookies();
 
   const sessionCookie = cookieStore.get("session")?.value;
-  console.log("[getCurrentUser] Session cookie:", sessionCookie ? "exists" : "missing");
   if (!sessionCookie) return null;
 
   try {
     const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
-    console.log("[getCurrentUser] Token verified, uid:", decodedClaims.uid);
 
     // Try to load user profile from Firestore, but don't fail auth if it's missing
     const userDocRef = db.collection("users").doc(decodedClaims.uid);
     const userRecord = await userDocRef.get();
-    console.log("[getCurrentUser] User doc exists:", userRecord.exists);
 
     if (!userRecord.exists) {
       const userData = {
@@ -131,7 +121,5 @@ export async function getCurrentUser(): Promise<User | null> {
 
 export async function isAuthenticated() {
   const user = await getCurrentUser();
-  const result = !!user;
-  console.log("[isAuthenticated] Result:", result, user ? `(user: ${user.email})` : "(no user)");
-  return result;
+  return !!user;
 }

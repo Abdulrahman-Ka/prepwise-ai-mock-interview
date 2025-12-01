@@ -3,16 +3,16 @@ import { signUp } from "@/lib/action/auth.action";
 
 export async function POST(request: Request) {
   try {
-    const { uid, name, email, password } = await request.json();
+    const { uid, name, email } = await request.json();
 
-    if (!uid || !name || !email || !password) {
+    if (!uid || !name || !email) {
       return NextResponse.json(
-        { success: false, message: "uid, name, email and password are required." },
+        { success: false, message: "uid, name, and email are required." },
         { status: 400 }
       );
     }
 
-    const result = await signUp({ uid, name, email, password });
+    const result = await signUp({ uid, name, email });
 
     if (!result || !result.success) {
       return NextResponse.json(
